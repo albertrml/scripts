@@ -1,104 +1,96 @@
 #!/bin/bash
-# Script dw_sondagem.sh
-# Autor: Eng. Albert R. M. Lopes <albert.richard@gmail.com>
-# Criado em: 01/11/2011
-# Modificado em: 
-#	       01/11/2011
-#		  - Flexibilidade para determinar o local onde será armazenado as sondagens
-#	       06/04/2012
-#		  - Flexibilidade para especificar o dia de download ou intervalo de dias
-#		  - Flexibilidade para determinar os horário de sondagens
-#			* Padrão: Somente para as 00
-#		  - Flexibilidade para especificar o conjunto de estações
-#			* Padrão: 82244,82281,82099,82193,82022,82332,83065
-#	       08/04/2012
-#		  - Alterações dos nomes das seguintes variáveis
-#			* ESTACOES --> ID_ESTACOES
-#			* SAIDA    --> ESTACAO
-#			* estacao  --> id_estacao
-#	       21/11/2016
-#		  - Funcionamento interno: os downloads das sondagens (arquivo temporário) por mês-a-mês ao invés de dia-a-dia.
-#		  - Script não está funcionando
-#		  
-#	       24/11/2016
-#		  - Novo mecanismo de download de dados brutos implementado e não testado.
-#		  - Novo mecanismo de extração das sondagens (via função ext_sondagem) implementado e não testado.
-#		  - Alteração do nome de get_sounding.sh para dw_sondagem.sh
-#		  - Alteração completa do conteúdo da função ajuda.
-#		  - Inserção de opções de segurança nas opções de execução
-#
-#	       25/11/2016
-#		  - Mecanismo de download de dados brutos funcionando
-#		  - Mecanismo de extração das sondagens (via função ext_sondagem) funcionando
-# 		  - Inserção do endereço para contribuições e relatar bugs.
-#
-# Sintaxe: dw_sondagens.sh [-v=<val> | --valor=<val>]
-#	   Para mais detalhes use: get_sounding.sh --help
+#* ------------------------------------------------------------------------------
+#*                            SCRIPT: sounding.sh
+#* ------------------------------------------------------------------------------
+#* Baixa as radiossondagens armazenadas nos servidores do departamento de 
+#* ciências atmosféricas da Universidade de Wyoming: http://weather.uwyo.edu
+#* 
+#* Uso: ./sounding.sh <-e="..."> <-h="..."> <-d=...|-p=...> [-l="..."]         
+#* 
+#* As opções entre <> e [] são obrigatórias e facultativas, respectivamente. O
+#* O simbolo | indica que somente umas das opções entre <> pode ser utilizada 
+#* por vez.
+#* 
+#*      OPÇÃO           ARGUMENTO                     DESCRIÇÃO
+#* -e, --estation  ="ID1 ID2 ... IDn"       IDs das estações meteorológicas
+#* 
+#* -h, --hour      =00 =12 ou ="00 12"      Horário UTC da radiossondagem
+#* 
+#* -d, --date      =AAAA/MM/DD              Data da radiossondagem desejada
+#* 
+#* -p, --period    =aaaa/mm/dd-AAAA/MM/DD   Período das radiossondagens: 
+#*                                          início-fim
+#* 
+#* -l, --local     ="/PATH/"                Local para armazenamento
+#* 
+#* -h, --help                               Opção de ajuda               
+#* 
+#* Alguns exemplos de ids de estações meteorológicas:                        
+#*	ESTAÇÃO 	ID   
+#*	Belém   	82193
+#* 	Boa Vista	82022
+#* 	Manaus   	82332
+#* 	Santarém	82244
+#* 	São Luiz	82281
+#* 
+#* Exemplo de uso: ./sounding.sh -e=82193 -h="00 12" -p=2016/04/03-2016/06/27
+#*   Baixa as radiossondagens realizadas em Belém no período entre 2016/04/03 e
+#*   2016/06/27 nos horários de 00Z e 12Z. As radiossodagens serão armazenadas no
+#*   diretório corrente por padrão.
+#* 
+#* Autor: Albert Richard M. L. <albert.richard@gmail.com>                      
+#* GitHub: github.com/albertrml/scripts/tree/main/meteorologia/sounding.sh
+#* Criado em: 01/11/2011
+#* ------------------------------------------------------------------------------
+#@ Modificado em: 
+#@ 	2011-11-01: Flexibilidade para determinar o local onde será armazenado as
+#@ 		    	sondagens.
+#@ 
+#@	2012-04-06: Flexibilidade para: especificar o dia de download ou intervalo de
+#@ 				dias; determinar os horário de sondagens, sendo o padrão somente
+#@ 				às 00; especificar o conjunto de estações,sendo o padrão: 82244,
+#@ 				82281, 82099, 82193, 82022, 82332 e 83065.
+#@ 
+#@	2012-04-08: Alterações dos nomes das seguintes variáveis
+#@				ESTACOES --> ID_ESTACOES
+#@				SAIDA    --> ESTACAO
+#@				estacao  --> id_estacao
+#@ 
+#@	2016-11-21: Funcionamento interno: os downloads das sondagens (arquivo
+#@  		    temporário) por mês-a-mês ao invés de dia-a-dia. Script não
+#@ 		    	está funcionando.
+#@ 		  
+#@	2016-11-24: Implementação dos novos mecanismos de download de dados brutos
+#@				e de extração das sondagens (via função ext_sondagem), ambos
+#@	 		    implementados e não testados. Alterações no nome do script de 
+#@ 			    get_sounding.sh para dw_sondagem.sh e na estrutura da função 
+#@ 			    ajuda. Inserção de opções de segurança nas opções de execução.
+#@ 
+#@	2016-11-25: Mecanismos ajustados e operacionais: download de dados brutos 
+#@ 		  		e extração das sondagens (via função ext_sondagem). Inserção
+#@ 		    	do endereço para contribuições e relatar bugs.
+#@ 
+#@	2024-11-15: Refatoração da função ajuste.
+#@ 
+#% Sintaxe: ./sounding.sh [-v=<val> | --valor=<val>]
+#% Para mais detalhes use: ./sounding.sh --help 
 
 clear
 
 USO="$0"
 LINK="http://weather.uwyo.edu/cgi-bin/sounding?region=samer&TYPE=TEXT%3ALIST"
 
-# -----------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-# ---------------------------------------- FUNÇÕES DE OPÇÕES ------------------------------------------
+# ------------------------- FUNÇÕES DE OPÇÕES -----------------------------------
 
 # MOSTRA AS OPÇÕES UTILIZAVÉIS DO COMANDO
 ajuda() {
-
-	COLUNAS=76
-
-	# Imprime o separador de sessão, que é constituído de 76 '-'
-	t=$(printf "%-"$COLUNAS"s" "-")
-	printf "%-"$COLUNAS"s\n" ${t// /-}
-
-	# Centraliza o texto referente ao nome do script
-	script_nome="SCRIPT: $(echo "$USO" | awk -F '/' '{printf $NF}' )"
-	printf "%*s\n" $(((${#script_nome}+$COLUNAS)/2)) "$script_nome"
-
-	t=$(printf "%-"$COLUNAS"s" "-")
-	printf "%-"$COLUNAS"s\n" ${t// /-}
-	
-	# Descrição do script	
-	descricao="Baixa as radiossondagens armazenadas nos servidores do departamento de ciências atmosféricas da Universidade de Wyoming (http://weather.uwyo.edu)"
-	printf "%s\n\n" "$descricao" | fmt -u -w $COLUNAS
-
-	# Modo de uso
-	modo_uso="Uso: $USO <-e=\"...\"> <-h=\"...\"> <-d=...|-p=...> [-l=\"...\"]"
-	texto1="As opções entre <> e [] são obrigatórias e facultativas, respectivamente."
-	texto2="O simbolo | indica que somente umas das opções entre <> pode ser utilizada por vez."
-	printf "%-"$COLUNAS"s\n\n" "$modo_uso"
-	printf "%-"$COLUNAS"s\n%-"$COLUNAS"s\n\n" "$texto1" "$texto2" | fmt -u 
-	
-	# Descrição das opções disponíveis
-	printf "%*s  %*s  %*s\n" 12 'OPÇÃO' 20 'ARGUMENTO' 30 'DESCRIÇÃO'
-	printf "%5s %-10s  %-23s  %-31s\n" '-e,' '--estation' '="ID1 ID2 ... IDn"' 'IDs das estações meteorológicas'
-	printf "%5s %-10s  %-23s  %-31s\n" '-h,' '--hour' '=00 =12 ou ="00 12"' 'Horário UTC da radiossondagem'
-	printf "%5s %-10s  %-23s  %-31s\n" '-d,' '--date' '=AAAA/MM/DD' 'Data da radiossondagem desejada'
-	printf "%5s %-10s  %-23s  %-31s\n" '-p,' '--period' '=aaaa/mm/dd-AAAA/MM/DD' 'Periodo das radiossondagens: inicio-fim'
-	printf "%5s %-10s  %-23s  %-31s\n" '-l,' '--local' '="/PATH/STORE/"' 'Local para armazenamento'
-	printf "%5s %-10s  %-23s  %-31s\n\n" '-l,' '--help' '' 'Opção de ajuda'
-
-	# Exemplos de estações meteorológicas
-	printf "%-"$COLUNAS"s\n\n" 'Alguns exemplos de ids de estações meteorológicas'
-	printf "    %-10s\t\t%-5s\n" 'ESTAÇÃO' 'ID'
-	printf "  - %-10s\t\t%-5s\n" 'Belém:' '82193'
-	printf "  - %-10s\t\t%-5s\n" 'Boa Vista:' '82022'
-	printf "  - %-10s\t\t%-5s\n" 'Manaus:' '82332'
-	printf "  - %-10s\t\t%-5s\n" 'Santarém:' '82244'
-	printf "  - %-10s\t\t%-5s\n\n" 'São Luiz:' '82281'
-
-	# Exemplos de uso do script
-	exemplo="$USO -e=82193 -h=\"00 12\" -p=2016/04/03-2016/06/27"
-	texto='Baixa as radiossondagens realizadas em Belém no período entre 2016/04/03 e 2016/06/27 nos horários de 00Z e 12Z. As 		       radiossodagens serão armazenadas no diretório corrente por padrão.'
-	printf "%-"$COLUNAS"s\n\n" 'Exemplo de uso:'
-	printf "%*s\n\n" $(((${#exemplo}+$COLUNAS)/2)) "$exemplo"
-	printf "%-"$COLUNAS"s\n\n" "$texto" | fmt -u -w $COLUNAS
-
-	# Outras informações
-	printf "%-"$COLUNAS"s\n" 'Autor: Albert Richard M. L. <albert.richard@gmail.com>'
-	printf "%-"$COLUNAS"s\n\n" 'Para contribuições e relatar bugs: <https://github.com/moraesBR/shell/blob/master/dw_sondagens.sh>'
+    DESCRICAO="$(
+        grep -e "^#\*" $0 | 
+        sed -e 's/^#\*//g'
+    )"
+    echo -e "$DESCRICAO"
 	exit
 }
 
@@ -111,35 +103,64 @@ ajuda() {
 # 5) Armazena as sondagem nos arquivos com o seguinte formato: <Nome da Estação>-<ANO><MES><DIA><HORÁRIO>.txt
 ext_sondagem(){
 
-   ARQUIVO="$1"
-   shift
-   HORAS=("$@")
-
-   CAMINHO=$(echo $ARQUIVO | awk -F "/" '{for(i=1;i<NF;i++){printf "/%s",$i}; printf "\n"}')
-   
-
-   TITULO=($(grep '<H2>[^H2>].*[^</H2]</H2>' "$ARQUIVO" | sed 's/<\/*H2>//g' | awk '{print $1":"$2":"$(NF-1)":"$(NF-2)":"$(NF-3)":"$NF}' | sed 's/Z//g'))
-   LINI=($(grep -n "^<PRE>" "$ARQUIVO" | awk -F: '{print $1}'))
-   LFIM=($(grep -n "^</PRE><H3>" "$ARQUIVO" | awk -F: '{print $1}'))
-   LTAM=${#TITULO[@]}
-
-
-   for i in $(seq $LTAM)
-   do 
-	read ESTACAO_NOME <<< $(echo ${TITULO[$(expr $i-1)]} | awk -F ":" '{print $2}')
-	read ANO MES DIA HORA <<< $(date -d "$(echo ${TITULO[$(expr $i-1)]} | awk -F ':' '{print $(NF-3),$(NF-2),$(NF-1),$NF}')" +'%Y %m %d %H')
+	ARQUIVO="$1"
+	shift
+	HORAS=("$@")
 	
-	for h in ${HORAS[*]}; do
-		test "$h" -eq "$HORA"  &&
-			(head -$(expr ${LFIM[$(expr $i-1)]} - 1) "$ARQUIVO" | tail -$(expr ${LFIM[$(expr $i-1)]} - ${LINI[$(expr $i-1)]} - 1) > "$CAMINHO/$ESTACAO_NOME-$ANO$MES$DIA$HORA.txt")
-	done
-   done
-
-   rm $ARQUIVO
+	CAMINHO=$(
+   		echo $ARQUIVO | 
+   		awk -F "/" '{for(i=1;i<NF;i++){printf "/%s",$i}; printf "\n"}'
+   	)
+   	
+   	TITULO=(
+   		$(
+   			grep '<H2>[^H2>].*[^</H2]</H2>' "$ARQUIVO" | 
+   			sed 's/<\/*H2>//g' | 
+   			awk '{print $1":"$2":"$(NF-1)":"$(NF-2)":"$(NF-3)":"$NF}' | 
+   			sed 's/Z//g'
+   		)
+   	)
+   	
+   	LINI=(
+   		$(
+   			grep -n "^<PRE>" "$ARQUIVO" | 
+   			awk -F: '{print $1}'
+   		)
+   	)
+   	
+   	LFIM=(
+   		$(
+   			grep -n "^</PRE><H3>" "$ARQUIVO" | awk -F: '{print $1}'
+   		)
+   	)
+   	
+   	LTAM=${#TITULO[@]}
+   	for i in $(seq $LTAM)
+   	do
+   		
+   		read ESTACAO_NOME <<< $(
+   			echo ${TITULO[$(expr $i-1)]} | awk -F ":" '{print $2}'
+   		)
+   		
+   		read ANO MES DIA HORA <<< $(
+   			date -d "$(echo ${TITULO[$(expr $i-1)]} | 
+   			awk -F ':' '{print $(NF-3),$(NF-2),$(NF-1),$NF}')" +'%Y %m %d %H'
+   		)
+   		
+   		for h in ${HORAS[*]}; 
+   		do
+   			test "$h" -eq "$HORA"  && (
+   				head -$(expr ${LFIM[$(expr $i-1)]} - 1) "$ARQUIVO" | 
+   				tail -$(expr ${LFIM[$(expr $i-1)]} - ${LINI[$(expr $i-1)]} - 1) > "$CAMINHO/$ESTACAO_NOME-$ANO$MES$DIA$HORA.txt"
+   			)
+   		done
+   	done
+   	
+   	rm $ARQUIVO
 
 }
 
-# ---------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 # -------- FILTRO DE OPÇÕES ----------
 
@@ -174,7 +195,7 @@ while test $# -gt 0 ; do
 	
 		HORARIOS=$(echo $HORARIOS | tr ' ' '\n')
 	;;
-	--help)
+	-h|--help)
 		ajuda
 	;;
 	-l=*|--local=*)
