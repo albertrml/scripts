@@ -1,0 +1,46 @@
+# -----------------------------------------------------------------------------
+
+	HTMLFILE=$1
+
+	# Formata o arquivo HTML em tabelas, sendo delimitadas por #x e @x, onde x
+	# é um número inteiro positivo.
+	TABELAS="$(awk '
+        /<H2>/,/<\/H2>/ { 
+                tabini++
+                print "#" tabini 
+        } 
+        /<PRE>/,/<\/PRE>/ { 
+                print 
+        } ; /<\/PRE><H3>/,/<\/H3><PRE>/ {
+                tabfim++ 
+                print "@" tabfim
+        }' $HTMLFILE | sed '/^<.*>/d')"
+
+	# Captura a tabela NUMTAB
+	NUMTAB=6
+	awk -v ini="#$NUMTAB" -v fim="@$NUMTAB" '
+		$0 ~ini, $0 ~ fim { 
+			print 
+		}' <<< $TABELAS
+		
+	TITULOS="$(
+		egrep -o "<H2>.*</H2>" $HTMLFILE | 
+		sed -E 's/<\/?H2>//g'
+	)"
+	
+	ESTACAO="$(cut -d' ' -f 2 <<< $TITULOS | uniq)"
+	
+	#Captura a data no formato YYYYMMDD
+	# 12Z 01 Nov 2024
+	# 12Z 02 Nov 2024
+	# 12Z 03 Nov 2024
+	# ...
+	TIMES="$(sed 's/.*at //' <<< $TITULOS)"
+	
+	while read -r line
+	do
+		date_part=$(echo "$line" | awk '{print $1, $2, $3, $4}')
+  		formatted_date="$(date -d "$date_part" -u +"%Y%m%d%H")"
+  		echo "$formatted_date"
+	done <<< $TIMES
+
