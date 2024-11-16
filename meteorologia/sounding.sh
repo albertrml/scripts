@@ -80,6 +80,89 @@ clear
 USO="$0"
 LINK="http://weather.uwyo.edu/cgi-bin/sounding?region=samer&TYPE=TEXT%3ALIST"
 
+function collect_sounding(){
+    local STATION="$1"
+    local YEAR="$2"
+    local MONTH="$3"
+    local LAST_DAY=$(date -d "$YEAR-$MONTH-01 +1 month -1 day" +"%d")
+    local LINK="http://weather.uwyo.edu/cgi-bin/sounding?region=samer&TYPE=TEXT%3ALIST&YEAR=$YEAR&MONTH=$MONTH&FROM=0100&TO="$LAST_DAY"18&STNM=$STATION"
+
+    wget -c "$LINK" -O "$STATION-$YEAR$MONTH.html"
+}
+
+function extract_dates() {
+    local SOUNDINGFILE="$1"
+    local TITLES="$(
+		egrep -o "<H2>.*</H2>" $SOUNDINGFILE | 
+		sed -E 's/<\/?H2>//g'
+	)"
+    
+    # Extrai as informações sobre data
+    local DATA="$(sed 's/.*at //' <<< $TITLES)"
+    
+    local DATES=()
+    while read -r line; do 
+        # Converter para o formato desejado com 'date'
+        formatted_date=$(date -d "$line" -u +"%Y%m%d%H")
+        DATES+=("$formatted_date")
+    done <<< "$DATA"
+    
+    echo "${DATES[@]}"
+}
+
+function extract_tables(){
+    local SOUNDINGFILE="$1" 
+        
+    TABELAS="$(awk '
+        /<H2>/,/<\/H2>/ { 
+                tabini++
+                print "#" tabini 
+        } 
+        /<PRE>/,/<\/PRE>/ { 
+                print 
+        } ; /<\/PRE><H3>/,/<\/H3><PRE>/ {
+                tabfim++ 
+                print "@" tabfim
+        }' $SOUNDINGFILE | sed '/^<.*>/d')"
+
+	echo "$TABELAS"
+}
+
+function extract_station(){
+    local SOUNDINGFILE="$1" 
+    TITLES="$(
+		egrep -o "<H2>.*</H2>" $SOUNDINGFILE | 
+		sed -E 's/<\/?H2>//g'
+	)"
+	
+	STATION="$(cut -d' ' -f 2 <<< $TITLES | uniq)"
+    
+    echo $STATION
+}
+
+function filter_sounding(){
+    local STATION="$1"
+    local TABLES="$2"
+    shift 2
+    local -a DATES=("$@")
+    
+    for INDEX in "${!DATES[@]}"
+    do
+        NUMTAB=$(expr $INDEX + 1)
+        CONTENT="$(awk -v ini="#$NUMTAB" -v fim="@$NUMTAB" '
+            $0 ~ini, $0 ~ fim {
+                print
+            }' <<< $TABLES
+        )"
+        echo "$CONTENT" | sed -e '/^[#@][0-9]*/d' > "$STATION-${DATES[$INDEX]}.txt"
+    done
+}
+
+#collectHTML 83378 2024 11
+#DATES=($(extract_dates 83378-202411.html))
+#TABLES="$(extract_tables 83378-202411.html)"
+#filter_sounding 83378 "$TABLES" ${DATES[@]}
+
 # -------------------------------------------------------------------------------
 
 # ------------------------- FUNÇÕES DE OPÇÕES -----------------------------------
