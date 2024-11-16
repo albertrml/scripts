@@ -161,6 +161,7 @@ function filter_sounding(){
 #collectHTML 83378 2024 11
 #DATES=($(extract_dates 83378-202411.html))
 #TABLES="$(extract_tables 83378-202411.html)"
+#STATION=$(extract_station 83378-202411.html)
 #filter_sounding 83378 "$TABLES" ${DATES[@]}
 
 # -------------------------------------------------------------------------------
