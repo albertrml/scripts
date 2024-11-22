@@ -1,45 +1,38 @@
 #!/bin/bash
-#* ------------------------------------------------------------------------------
+* ------------------------------------------------------------------------------
 #*                            SCRIPT: sounding.sh
 #* ------------------------------------------------------------------------------
-#* Baixa as radiossondagens armazenadas nos servidores do departamento de 
-#* ciências atmosféricas da Universidade de Wyoming: http://weather.uwyo.edu
-#* 
-#* Uso: ./sounding.sh <-s="..."> <-d=...|-p=...> [-l="..."]         
-#* 
-#* As opções entre <> e [] são obrigatórias e facultativas, respectivamente. O
-#* O simbolo | indica que somente umas das opções entre <> pode ser utilizada 
-#* por vez.
-#* 
-#*      OPÇÃO           ARGUMENTO                     DESCRIÇÃO
-#* -d, --date      =AAAA/MM/DD              Data da radiossondagem desejada
-#* 
-#* -p, --period    =aaaa/mm/dd-AAAA/MM/DD   Período das radiossondagens: 
-#*                                          início-fim
-#* 
-#* -s, --station   ="ID1 ID2 ... IDn"       IDs das estações meteorológicas
-#* 
-#* -l, --local     ="/PATH/"                Local para armazenamento
-#* 
-#* -h, --help                               Opção de ajuda               
-#* 
-#* Alguns exemplos de ids de estações meteorológicas:                        
-#*	ESTAÇÃO 	ID   
-#*	Belém   	82193
-#* 	Boa Vista	82022
-#* 	Manaus   	82332
-#* 	Santarém	82244
-#* 	São Luiz	82281
-#* 
-#* Exemplo de uso: ./sounding.sh -e=82193 -h="00 12" -p=2016/04/03-2016/06/27
+#* This script retrieves sounding data from the Atmospheric Sciences server at  
+#* Wyoming University: http://weather.uwyo.edu. We can execute it as follows:
 #*
-#* Baixa as radiossondagens realizadas em Belém no período entre 2016/04/03 e
-#* 2016/06/27 nos horários de 00Z e 12Z. As radiossodagens serão armazenadas no
-#* diretório corrente por padrão.
+#* Uso: ./sounding.sh <-s="..."> <-h="..."> <-d=...|-p=...> [-l="..."]         
 #* 
-#* Autor: Albert Richard M. L. <albert.richard@gmail.com>                      
+#* The options between <> and [] are mandatories and optionals, respectively. 
+#* The | symbols points out to exclusives ways for some option. 
+#*
+#* OPTION          ARGUMENT                 DESCRIPTION
+#*
+#* -s, --station   =82193 ou =82281         Upper-Air Station ID
+#* 
+#* -h, --hour      =00 =12 ou ="00 12"      Sounding time in UTC
+#* 
+#* -d, --date      =AAAA/MM/DD              Specific sounding date
+#* 
+#* -p, --period    =aaaa/mm/dd-AAAA/MM/DD   Sounding period
+#* 
+#* -l, --local     ="/PATH/"                A path to retrieve sounding data
+#* 
+#* -h, --help                               Shows how to use sounding command              
+#* 
+#* Use case: ./sounding.sh -s=82193 -h="00 12" -p=2016/04/03-2016/06/27
+#* 
+#* The user will retrieve sounding data from the SBBE station from 2016/04/03 to 
+#* 2016/06/27 at 00Z and 12Z. Since no path was specified, the sounding data will 
+#* be stored in the current location.
+#* 
+#* Author: Albert Richard M. L. <albertrml.dev@gmail.com>                      
 #* GitHub: github.com/albertrml/scripts/tree/main/meteorologia/sounding.sh
-#* Criado em: 01/11/2011
+#* Criado em: 2011-11-01
 #* ------------------------------------------------------------------------------
 #@ Modificado em: 
 #@ 	2011-11-01: Flexibilidade para determinar o local onde será armazenado as
@@ -71,8 +64,10 @@
 #@ 
 #@	2024-11-15: Refatoração da função ajuste.
 #@ 
-#% Sintaxe: ./sounding.sh [-v=<val> | --valor=<val>]
-#% Para mais detalhes use: ./sounding.sh --help 
+#@	2024-11-21: We updated the entire script from scratch and rebuilt it in 
+#@				English. Now, we can retrieve a set of sounding data by date 
+#@				or period at specific times for a single station.
+#@
 
 clear
 
