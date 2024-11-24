@@ -32,7 +32,8 @@
 #* 
 #* Author: Albert Richard M. L. <albertrml.dev@gmail.com>                      
 #* GitHub: github.com/albertrml/scripts/tree/main/meteorologia/sounding.sh
-#* Criado em: 2011-11-01
+#* Created on 2011-11-01
+#* Updated on 2024-11-21
 #* ------------------------------------------------------------------------------
 #@ Modificado em: 
 #@ 	2011-11-01: Flexibilidade para determinar o local onde será armazenado as
