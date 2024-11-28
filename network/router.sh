@@ -7,11 +7,11 @@
 #* OPÇÕES:
 #*      --acl-number=* | --acl=* | -acl
 #*          Lista as configurações das regras de controle de acesso, Access   
-#*          Control List (ACL). As duas primeira formas mostram as ACLs em
+#*          Control List (ACL). As duas primeiras formas mostram as ACLs em
 #*          função de uma lista de números inteiros positivos separados por 
 #*          vírgula, por exemplo, -acl=2000,3000,2505 ou -acl=all. A opção
-#*          -acl lista todas as acls existentes com suas respectivas
-#*          lista de regras.
+#*          -acl lista todas as acls existentes com suas respectivas lista
+#*          de regras.
 #*
 #*      -bgp=* | -bgp
 #*          Mostra as configurações de bgp a partir de uma lista de números 
@@ -25,10 +25,10 @@
 #*      --interfaces=* | -int=* | -int
 #*          Lista as configurações de interfaces. As duas primeiras formas 
 #*          mostram as informações de configuração das interfaces especificadas
-#*           com determinado prefixo, podendo ser uma expressão regular. Por 
+#*          com determinado prefixo, podendo ser uma expressão regular. Por 
 #*          exemplo, -int=Ether, -int=.*0/0/12 ou --interfaces=all. A forma
-#*          -int lista todas as interfaces existente com sua respectiva
-#*          configuração.
+#*          -int lista todas as interfaces existentes com suas respectivas
+#*          configurações.
 #*
 #*      --ike-peer=* | -ike=* | -ike
 #*          Lista as definições de Internet Key Exchange (IKE), que determina o 
@@ -47,43 +47,43 @@
 #*          listam todas propostas existentes.
 #*
 #*      --ip-prefix=* | -iprx=* | -iprx
-#*	    Lista as regras de bloqueio ou permissão para determinadas  
-#*          redes. As duas primeiras formas mostram as regras que contenham
+#*          Lista as regras de bloqueio ou permissão para determinadas redes.
+#*          As duas primeiras formas mostram as regras que contenham
 #*          o termo informado, por exemplo -iprx=REDE_AG ou --ip-prefix=BGP_. 
 #*          As opções --ip-prefix=all, -iprx=all e -iprx mostram todas as 
 #*          regras definidas.
 #*
 #*      --ip-route-static=* | -iprs=* | -iprs
 #*          Lista as regras de rota estática, que estabelece o destino do 
-#*          próximo salto. As duas primeira opções filtra a lista em função
+#*          próximo salto. As duas primeira opções filtram a lista em função
 #*          de uma REGEX, por exemplo, --ip-route-static=10.122.0.16 ou 
 #*          -ikp=vpn-instance. As opções --ip-route-static=all, -iprs=all e
-#*	    -iprs listam as rotas definidas.
+#*          -iprs listam as rotas definidas.
 #*
 #*      --ipsec-proposal=* | -ipro=* | -ipro
 #*          Lista as propostas para IPSEC. Uma proposta é um conjunto de 
 #*          parâmetros que definem como ocorrerá a negociação de associação, 
-#*	    isto é, as fases da IPSEC SA. As duas primeiras formas mostram  
+#*          isto é, as fases da IPSEC SA. As duas primeiras formas mostram  
 #*          as definições de propostas de vpn cujos os nomes contenham o termo 
-#*	    informado, por exemplo, --ipsec-proposal=vpn ou -ipro=vpn_2.
+#*          informado, por exemplo, --ipsec-proposal=vpn ou -ipro=vpn_2.
 #*          O termo pode ser uma expressão regular. As formas -ipro=all,
 #*          --ipsec-proposal=all e -ipro mostram todas as propostas definidas
 #*          com suas respectivas configurações.
 #*
 #*      --ipsec-policy=* | -ipol=* | -ipol
-#*	    Lista as configurações das políticas de IPSEC SA, isto é, a vpn.
+#*          Lista as configurações das políticas de IPSEC SA, isto é, a vpn.
 #*          As duas primeiras formas mostram as políticas atribuídas às ipsec
 #*          cujos os nomes contenham o termo passado, por exemplo, -ipol=rede2.
-#*	    As opções --ipsec-policy=all, -ipol=all e -ipol lista todas as
+#*          As opções --ipsec-policy=all, -ipol=all e -ipol lista todas as
 #*          políticas existentes.
 #*
 #*      --route-policy=*|-rpol=*|-rpol
-#*	    Lista as políticas atribuídas que são usadas para filtrar as 
-#*	    rotas e controlar como as rotas serão recebidas e publicadas.
+#*          Lista as políticas atribuídas que são usadas para filtrar as 
+#*          rotas e controlar como as rotas serão recebidas e publicadas.
 #*          As duas primeiras formas mostram as políticas atribuídas às ipsec
 #*          cujos os nomes contenham o termo passado, por exemplo, -ipol=rede2.
 #*          O termo pode ser uma expressão regular que servirá como prefixo.
-#*	    As formas --route-policy=all, -rpol=all e -rpol mostram todas as 
+#*          As formas --route-policy=all, -rpol=all e -rpol mostram todas as 
 #*          as políticas às rotas existentes.
 #*
 #*      --version | -v
@@ -139,7 +139,7 @@ function extrair_dados() {
     local ROTEADOR="$3"
     
     # Como é utilizado expressão regular .*$FILTRO.* para encontrar as
-    # interfaces, substui-se all por vazio, resultando na expressão regular
+    # interfaces, substitui-se all por vazio, resultando na expressão regular
     # .*, isto é, qualquer nome de interface
     test "$FILTRO" == "all" && FILTRO=""
     
@@ -156,7 +156,6 @@ function extrair_dados() {
     )
     
     # Para cada ipsec proposal capturado, lista-se as definições
-    #for i in "${#NAMES[@]}"
     for (( i=0; i<${#NAMES[@]}; i++ ));
     do
         DATA="$(
@@ -262,46 +261,49 @@ do
                 extrair_dados "interface" ${PARMS[@]} || alerta
         ;;
         --ike-peer=*|-ike=*|-ike)
-            # Informa as ike peers a partir de uma regex
+            # Informa as ike peers a partir de uma Regex
             PARMS=($(tratar_entrada $# "-ike" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ike peer" ${PARMS[@]} || alerta
         ;;
         --ike-proposal=*|-ikp=*|-ikp)
-            # Informa as ike proposals a partir de uma regex
+            # Informa as ike proposals a partir de uma Regex
             PARMS=($(tratar_entrada $# "-ikp" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ike proposal" ${PARMS[@]} || alerta
         ;;
         --ip-prefix=*|-iprx=*|-iprx)
+            # Informa as ip prefix a partir de uma Regex
             PARMS=($(tratar_entrada $# "-iprx" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ip ip-prefix" ${PARMS[@]} | sed -e '/^$/d' || alerta
         ;;
         --ip-route-static=*|-iprs=*|-iprs)
+            # Informa a rota estática a partir de uma Regex
             PARMS=($(tratar_entrada $# "-iprs" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ip route-static" ${PARMS[@]} | sed -e '/^$/d' || alerta
         ;;
         --ipsec-policy=*|-ipol=*|-ipol)
-            # Informa as ipsec policies a partir de uma regex
+            # Informa as ipsec policies a partir de uma Regex
             PARMS=($(tratar_entrada $# "-ipol" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ipsec policy" ${PARMS[@]} || alerta
         ;;
         --ipsec-proposal=*|-ipro=*|-ipro)
-            # Informa as ipsec proposals a partir de uma regex
+            # Informa as ipsec proposals a partir de uma Regex
             PARMS=($(tratar_entrada $# "-ipro" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
                 extrair_dados "ipsec proposal" ${PARMS[@]} || alerta
         ;;
         --route-policy=*|-rpol=*|-rpol)
+            # Informa a política de rota a partir de uma Regex
             PARMS=($(tratar_entrada $# "-rpol" $1 $2 0))
             shift
             test ${#PARMS[@]} -eq 2 && 
